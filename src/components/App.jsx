@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { getAllImages, necessaryValues } from 'api/api';
 import SearchBar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
@@ -9,32 +9,23 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 
-export class App extends Component  {
-  state = {
-    images:[],
-    largeImageURL:'',
-    searchQuery:'',
-    error:null,
-    page:1,
-    isLoading: false,
-    showModal: false,
-    tags:'',
-  }
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [largeImageURL, setLargeImageUrl] = useState('');
+  // const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [tags, setTags] = useState('');
+  const [totalHits, setTotalHits] = useState(null);
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevSearchQuery = prevState.searchQuery;
-    const nextSearchQuery = this.state.searchQuery;
-    const prevPage = prevState.page;
-    const page = this.state.page;
 
-    if (prevSearchQuery !== nextSearchQuery || prevPage !== page) {
-      this.renderGalery();
-    }
-  }
-
-  renderGalery = async () => {
-    const { searchQuery, page } = this.state
-     this.setState({ isLoading:true });
+  useEffect(() => {
+    if (!searchQuery) return 
+          
+  const renderGalery = async () => {
+     setIsLoading(true);
 
      try {
       const { hits, totalHits } = await getAllImages(searchQuery, page);
@@ -44,65 +35,60 @@ export class App extends Component  {
         }
 
       const newImages = necessaryValues(hits);
-        this.setState(({ images }) => ({
-          images: [...images, ...newImages],
-          totalHits,
-        }))
+        setImages(images => [...images, ...newImages])
+        setTotalHits(totalHits)
       
      } catch (error) {
-        this.setState({ error })
+        error({ error })
           toast.error({error})
 
      } finally {
-        this.setState({ isLoading: false})
+        setIsLoading(false)
      }
   }
+    renderGalery();
+  },[searchQuery, page])
 
-  onFormSubmit = searchQuery => {
-    this.setState({ searchQuery, images: [], page: 1 });
+
+  const onFormSubmit = searchQuery => {
+    setSearchQuery(searchQuery);
+    setPage(1);
+    setImages([]);
   }
 
-  onLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }))
+  const onLoadMore = () => {
+    setPage(page + 1);
   }
 
-  openModal = (largeImageURL, tags) => {
-    this.tggleModal()
-    this.setState({ largeImageURL, tags })
+  const openModal = largeImageURL => {
+    setLargeImageUrl(largeImageURL)
+    toggleModal()
   }
 
-  tggleModal = () => {
-    this.setState(({ showModal}) => ({
-      showModal: !showModal,
-    }))
+  const toggleModal = () => {
+    setShowModal(prev => !prev)
   }
 
-
-render() {
-  const { images, largeImageURL, isLoading, showModal, tags, totalHits} = this.state;
-  const allImages = images.length === totalHits;
+  const allImages = images === totalHits;
 
   return (
     <>
       <SearchBar
-       onSubmit={this.onFormSubmit}
+       onSubmit={onFormSubmit}
         />
       <ImageGallery
        images={images}
-       onOpenModal={this.openModal}
+       onOpenModal={openModal}
         />
       <ToastContainer />
-      {isLoading && <Loader />}
-      {images.length !== 0 && !isLoading && !allImages && (
-        <Button onClick={this.onLoadMore} />)}
-      {showModal && (<Modal 
-                        onModalClick={this.tggleModal}
-                        largeImageURL={largeImageURL}
-                        alt={tags}/>)}
+        {isLoading && <Loader />}
+        {images.length !== 0 && !isLoading && !allImages && (
+      <Button onClick={onLoadMore} />)}
+        {showModal && (
+          <Modal 
+            onModalClick={toggleModal}
+            largeImageURL={largeImageURL}
+            alt={tags}/>)}
     </>
-  );
-}
-  
+  )
 };

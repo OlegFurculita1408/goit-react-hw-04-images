@@ -1,40 +1,35 @@
-import { Component } from "react";
+import { useState } from "react";
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 import css from './Searchbar.module.css';
 
-class SearchBar extends Component {
-    state = {
-        searchQuery: '',
+const SearchBar = ({onSubmit}) => {
+    const [searchQuery, setSearchQuery] = useState('')
+
+
+    const handleChange = (e) => {
+        setSearchQuery(e.currentTarget.value)
     }
 
-    handleChange = (e) => {
-        this.setState({ searchQuery: e.currentTarget.value })
-    }
-
-    handleSubmit = (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault()
-        if (this.state.searchQuery.trim() === '') {
-            console.error('please enter a value to search!');
+        if (searchQuery.trim() === '') {
+            toast.error('please enter a value to search!', {position: toast.POSITION.TOP_LEFT});
             return
         }
-        this.props.onSubmit(this.state.searchQuery)
-        this.reset()
+        onSubmit(searchQuery)
+        setSearchQuery('')
     }
-        reset = () => {
-            this.setState({ searchQuery: '' })
-        }
-
-    render(){
-        const { searchQuery } = this.state
+        
         return(
             <header className={css.Searchbar}>
-                <form className={css.SearchForm} onSubmit={this.handleSubmit}>
+                <form className={css.SearchForm} onSubmit={handleSubmit}>
                     <button type="submit" className={css.SearchFormButton}>
                     <span className={css.SearchFormButtonLabel}>Search</span>
                     </button>
                     <input
                     className={css.SearchFormInput}
-                    onChange={this.handleChange}
+                    onChange={handleChange}
                     value={searchQuery}
                     type="text"
                     // autocomplete="off"
@@ -44,7 +39,7 @@ class SearchBar extends Component {
                 </form>
             </header>
         )
-    }
+
 }
 SearchBar.propTypes = {
     onSubmit: PropTypes.func,
