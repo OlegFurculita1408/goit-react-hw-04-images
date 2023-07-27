@@ -63,6 +63,7 @@ export const App = () => {
   const openModal = largeImageURL => {
     setLargeImageUrl(largeImageURL)
     toggleModal()
+    setTags(tags)
   }
 
   const toggleModal = () => {
